@@ -1,0 +1,10 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="elin" type="UnityPlayer" factoryName="UnityAttachToPlayer">
+    <option name="host" value="127.0.0.1" />
+    <option name="playerId" value="CustomPlayer(127.0.0.1:0)" />
+    <option name="playerInstanceId" value="カスタム" />
+    <option name="port" value="55555" />
+    <option name="projectName" value="カスタム" />
+    <method v="2" />
+  </configuration>
+</component>
