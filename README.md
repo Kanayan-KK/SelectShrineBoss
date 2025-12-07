@@ -15,7 +15,9 @@ Elin Mod
 
 【注意】
 リストの内容はバイオームやネフィア危険度の影響を受けます。
+
 ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
 [Overview]
 Allows you to select the boss monster summoned when using the Shrine of Strife from a list.
 
