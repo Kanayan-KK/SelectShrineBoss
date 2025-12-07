@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using HarmonyLib;
 
 namespace SelectShrineBoss
@@ -12,14 +13,11 @@ namespace SelectShrineBoss
             if (__instance.Shrine.id != "strife")
                 return true;
 
-            // 自キャラの座標を取得
+            // 祠の座標を取得
             var point = __instance.owner.ExistsOnMap ? __instance.owner.pos : EClass.pc.pos;
 
-            // 自キャラ周辺の座標を取得
-            var pos = point.GetNearestPoint(allowChara: false);
-
-            // バイオームオブジェクト取得
-            var biome = pos.cell.biome;
+            // バイオーム情報を祠座標から取得
+            var biome = point.cell.biome;
 
             // ボス用のスポーン設定を生成
             var spawnSettings = SpawnSetting.Boss(__instance.owner.LV);
@@ -39,7 +37,11 @@ namespace SelectShrineBoss
             }
 
             // スポーン可能モンスターリストを取得
-            var spawnList = SpawnList.Get(biome.spawn.GetRandomCharaId());
+            var spawnList = CreateSpawnList(spawnSettings, biome);
+            
+            // リスト生成に失敗したら終了
+            if (spawnList == null)
+                return true;
 
             // 生成レベルによってリストをフィルタリング
             var filteredList = spawnList.Filter(lv, spawnSettings.levelRange);
@@ -54,29 +56,77 @@ namespace SelectShrineBoss
                 {
                     // 選択モンスターをボスとしてスポーン  
                     var selectedRow = sortedList[index];
-                    SpawnEnemy(pos, __instance, selectedRow);
+                    SpawnEnemy(point, __instance, selectedRow);
                 })
                 .SetHeader("Select Boss");
 
             return false;
         }
 
-        private static void SpawnEnemy(Point pos, TraitShrine shrine, CardRow bossRow)
+        // 敵キャラ生成処理
+        private static void SpawnEnemy(Point point, TraitShrine shrine, CardRow bossRow)
         {
             var count = 3 + EClass.rnd(2);
 
             // ボスを生成
             EClass._zone
-                .SpawnMob(pos,
+                .SpawnMob(point.GetNearestPoint(allowChara: false),
                     SpawnSetting.Boss(bossRow.id, fixedLv: shrine.owner.LV))?.PlayEffect("teleport");
 
             // モブを生成
             for (var i = 1; i < count; i++)
             {
                 EClass._zone
-                    .SpawnMob(pos,
+                    .SpawnMob(point.GetNearestPoint(allowChara: false),
                         SpawnSetting.DefenseEnemy(shrine.owner.LV))?.PlayEffect("teleport");
             }
+        }
+
+        // Zone.csのSpawnMobメソッド内のspawnList変数作成処理を移植
+        private static SpawnList? CreateSpawnList(SpawnSetting setting, BiomeProfile? biome)
+        {
+            SpawnList spawnList;
+            if (setting.idSpawnList != null)
+            {
+                spawnList = SpawnList.Get(setting.idSpawnList);
+            }
+            else
+            {
+                switch (EClass._zone)
+                {
+                    case Zone_DungeonYeek _ when EClass.rnd(5) != 0:
+                        spawnList = SpawnListChara.Get("dungeon_yeek", (Func<SourceChara.Row, bool>) (r => r.race == "yeek" && r.quality == 0));
+                        break;
+                    case Zone_DungeonDragon _ when EClass.rnd(5) != 0:
+                        spawnList = SpawnListChara.Get("dungeon_dragon", (Func<SourceChara.Row, bool>) (r => (r.race == "dragon" || r.race == "drake" || r.race == "wyvern" || r.race == "lizardman" || r.race == "dinosaur") && r.quality == 0));
+                        break;
+                    case Zone_DungeonMino _ when EClass.rnd(5) != 0:
+                        spawnList = SpawnListChara.Get("dungeon_mino", (Func<SourceChara.Row, bool>) (r => r.race == "minotaur" && r.quality == 0));
+                        break;
+                    default:
+                        if (setting.hostility == SpawnHostility.Neutral || setting.hostility != SpawnHostility.Enemy && (double) Rand.Range(0.0f, 1f) < (double) EClass._zone.ChanceSpawnNeutral)
+                        {
+                            spawnList = SpawnList.Get("c_neutral");
+                            break;
+                        }
+                        if (biome?.spawn.chara.Count > 0)
+                        {
+                            spawnList = SpawnList.Get(biome.spawn.GetRandomCharaId());
+                            break;
+                        }
+                        spawnList = SpawnList.Get(biome?.name, "chara", (CardFilter) new CharaFilter()
+                        {
+                            ShouldPass = (Func<SourceChara.Row, bool>) (s =>
+                            {
+                                if (s.hostility != "")
+                                    return false;
+                                return s.biome == biome?.name || s.biome.IsEmpty();
+                            })
+                        });
+                        break;
+                }
+            }
+            return spawnList;
         }
     }
 }
