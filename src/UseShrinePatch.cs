@@ -9,8 +9,8 @@ namespace SelectShrineBoss
     {
         private static bool Prefix(TraitShrine __instance, Chara c)
         {
-            // 争いの祠以外の場合は処理終了
             if (__instance.Shrine.id != "strife")
+                // 争いの祠以外の場合は既存処理を実行
                 return true;
 
             // 祠の座標を取得
@@ -60,6 +60,7 @@ namespace SelectShrineBoss
                 })
                 .SetHeader("Select Boss");
 
+            // 既存処理をスキップ
             return false;
         }
 
