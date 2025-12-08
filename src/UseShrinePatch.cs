@@ -32,30 +32,30 @@ namespace SelectShrineBoss
             if (EClass._zone.ScaleType == ZoneScaleType.Void)
             {
                 lv = ((dangerLv - 1) % 50 + 5) * 150 / 100;
-                if (lv >= 20 && EClass.rnd(100) < lv)
+
+                // 既存処理では判定に乱数生成を使用しているが実装意図がよくわからないので省く
+                // 下記が既存処理
+                // if (lv >= 20 && EClass.rnd(100) < lv)
+
+                if (lv >= 20)
                     lv = dangerLv;
             }
 
-            // スポーン可能モンスターリストを取得
-            var spawnList = CreateSpawnList(spawnSettings, biome);
-            
-            // リスト生成に失敗したら終了
-            if (spawnList == null)
-                return true;
+            // 生成可能モンスターリストを取得
+            var spawnList = CreateSpawnList(lv, spawnSettings, biome);
 
-            // 生成レベルによってリストをフィルタリング
-            var filteredList = spawnList.Filter(lv, spawnSettings.levelRange);
-
-            // レベルでソート
-            var sortedList = filteredList.rows.OrderByDescending(row => row.LV).ToList();
+            // Lvで降順ソート
+            var sortedRows = spawnList.rows
+                .OrderByDescending(row => row.LV)
+                .ToList();
 
             // UI表示
             EClass.ui.AddLayer<LayerList>()
                 .SetSize(400, -1)
-                .SetList(sortedList, (r) => $"LV.{r.LV} {r.GetName()}", (index, text) =>
+                .SetList(sortedRows, (r) => $"LV.{r.LV} {r.GetName()}", (index, text) =>
                 {
-                    // 選択モンスターをボスとしてスポーン  
-                    var selectedRow = sortedList[index];
+                   // リスト選択時処理を設定
+                    var selectedRow = sortedRows[index];
                     SpawnEnemy(point, __instance, selectedRow);
                 })
                 .SetHeader("Select Boss");
@@ -84,7 +84,7 @@ namespace SelectShrineBoss
         }
 
         // Zone.csのSpawnMobメソッド内のspawnList変数作成処理を移植
-        private static SpawnList? CreateSpawnList(SpawnSetting setting, BiomeProfile? biome)
+        private static SpawnList CreateSpawnList(int lv, SpawnSetting setting, BiomeProfile? biome)
         {
             SpawnList spawnList;
             if (setting.idSpawnList != null)
@@ -96,28 +96,36 @@ namespace SelectShrineBoss
                 switch (EClass._zone)
                 {
                     case Zone_DungeonYeek _ when EClass.rnd(5) != 0:
-                        spawnList = SpawnListChara.Get("dungeon_yeek", (Func<SourceChara.Row, bool>) (r => r.race == "yeek" && r.quality == 0));
+                        spawnList = SpawnListChara.Get("dungeon_yeek",
+                            (Func<SourceChara.Row, bool>)(r => r.race == "yeek" && r.quality == 0));
                         break;
                     case Zone_DungeonDragon _ when EClass.rnd(5) != 0:
-                        spawnList = SpawnListChara.Get("dungeon_dragon", (Func<SourceChara.Row, bool>) (r => (r.race == "dragon" || r.race == "drake" || r.race == "wyvern" || r.race == "lizardman" || r.race == "dinosaur") && r.quality == 0));
+                        spawnList = SpawnListChara.Get("dungeon_dragon",
+                            (Func<SourceChara.Row, bool>)(r =>
+                                (r.race == "dragon" || r.race == "drake" || r.race == "wyvern" ||
+                                 r.race == "lizardman" || r.race == "dinosaur") && r.quality == 0));
                         break;
                     case Zone_DungeonMino _ when EClass.rnd(5) != 0:
-                        spawnList = SpawnListChara.Get("dungeon_mino", (Func<SourceChara.Row, bool>) (r => r.race == "minotaur" && r.quality == 0));
+                        spawnList = SpawnListChara.Get("dungeon_mino",
+                            (Func<SourceChara.Row, bool>)(r => r.race == "minotaur" && r.quality == 0));
                         break;
                     default:
-                        if (setting.hostility == SpawnHostility.Neutral || setting.hostility != SpawnHostility.Enemy && (double) Rand.Range(0.0f, 1f) < (double) EClass._zone.ChanceSpawnNeutral)
+                        if (setting.hostility == SpawnHostility.Neutral || setting.hostility != SpawnHostility.Enemy &&
+                            (double)Rand.Range(0.0f, 1f) < (double)EClass._zone.ChanceSpawnNeutral)
                         {
                             spawnList = SpawnList.Get("c_neutral");
                             break;
                         }
+
                         if (biome?.spawn.chara.Count > 0)
                         {
                             spawnList = SpawnList.Get(biome.spawn.GetRandomCharaId());
                             break;
                         }
-                        spawnList = SpawnList.Get(biome?.name, "chara", (CardFilter) new CharaFilter()
+
+                        spawnList = SpawnList.Get(biome?.name, "chara", (CardFilter)new CharaFilter()
                         {
-                            ShouldPass = (Func<SourceChara.Row, bool>) (s =>
+                            ShouldPass = (Func<SourceChara.Row, bool>)(s =>
                             {
                                 if (s.hostility != "")
                                     return false;
@@ -127,6 +135,10 @@ namespace SelectShrineBoss
                         break;
                 }
             }
+
+            // 生成レベルによってリストをフィルタリング
+            spawnList = spawnList.Filter(lv, setting.levelRange);
+
             return spawnList;
         }
     }
