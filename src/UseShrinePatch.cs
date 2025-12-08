@@ -64,7 +64,7 @@ namespace SelectShrineBoss
             return false;
         }
 
-        // 敵キャラ生成処理
+        // 既存処理と同じメソッドを使用して敵キャラを生成する
         private static void SpawnEnemy(Point point, TraitShrine shrine, CardRow bossRow)
         {
             var count = 3 + EClass.rnd(2);
