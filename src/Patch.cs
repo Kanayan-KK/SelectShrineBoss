@@ -4,10 +4,12 @@ using HarmonyLib;
 
 namespace SelectShrineBoss
 {
-    [HarmonyPatch(typeof(TraitShrine), nameof(TraitShrine._OnUse))]
-    internal class UseShrinePatch
+    [HarmonyPatch]
+    internal class Patch
     {
-        private static bool Prefix(TraitShrine __instance, Chara c)
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(TraitShrine), nameof(TraitShrine._OnUse))]
+        private static bool Prefix(TraitShrine __instance)
         {
             if (__instance.Shrine.id != "strife")
                 // 争いの祠以外の場合は既存処理を実行
@@ -33,29 +35,32 @@ namespace SelectShrineBoss
             {
                 lv = ((dangerLv - 1) % 50 + 5) * 150 / 100;
 
-                // 既存処理では判定に乱数生成を使用しているが実装意図がよくわからないので省く
-                // 下記が既存処理
+                // 下記既存処理で乱数生成を使用しているが実装意図がよくわからないのでコメントアウト
                 // if (lv >= 20 && EClass.rnd(100) < lv)
                 //     lv = dangerLv;
             }
 
             // 生成可能モンスターリストを取得
-            var spawnList = CreateSpawnList(lv, spawnSettings, biome);
+            var spawnList = CreateSpawnList(spawnSettings, biome);
+
+            // レベルでリストをフィルタリング
+            var filteredList = spawnList.Filter(lv);
 
             // Lvで降順ソート
-            var sortedRows = spawnList.rows
+            var sortedRows = filteredList.rows
                 .OrderByDescending(row => row.LV)
                 .ToList();
-    
+
             // UI表示
             EClass.ui.AddLayer<LayerList>()
-                .SetSize(400, -1)
-                .SetList(sortedRows, (r) => $"LV.{r.LV} {r.GetName()}", (index, text) =>
-                {
-                   // リスト選択時処理を設定
-                    var selectedRow = sortedRows[index];
-                    SpawnEnemy(point, __instance, selectedRow);
-                })
+                .SetSize(400)
+                .SetList(sortedRows,
+                    (row) => $"LV.{row.LV} {row.GetName()}",
+                    (index, _) =>
+                    {
+                        // リスト選択時処理を設定
+                        SpawnEnemies(point, __instance, sortedRows[index]);
+                    })
                 .SetHeader("Select Boss");
 
             // 既存処理をスキップ
@@ -63,7 +68,7 @@ namespace SelectShrineBoss
         }
 
         // 既存処理と同じメソッドを使用して敵キャラを生成する
-        private static void SpawnEnemy(Point point, TraitShrine shrine, CardRow bossRow)
+        private static void SpawnEnemies(Point point, TraitShrine shrine, CardRow bossRow)
         {
             var count = 3 + EClass.rnd(2);
 
@@ -82,7 +87,7 @@ namespace SelectShrineBoss
         }
 
         // Zone.csのSpawnMobメソッド内のspawnList変数作成処理を移植
-        private static SpawnList CreateSpawnList(int lv, SpawnSetting setting, BiomeProfile? biome)
+        private static SpawnList CreateSpawnList(SpawnSetting setting, BiomeProfile? biome)
         {
             SpawnList spawnList;
             if (setting.idSpawnList != null)
@@ -109,7 +114,7 @@ namespace SelectShrineBoss
                         break;
                     default:
                         if (setting.hostility == SpawnHostility.Neutral || setting.hostility != SpawnHostility.Enemy &&
-                            (double)Rand.Range(0.0f, 1f) < (double)EClass._zone.ChanceSpawnNeutral)
+                            Rand.Range(0.0f, 1f) < (double)EClass._zone.ChanceSpawnNeutral)
                         {
                             spawnList = SpawnList.Get("c_neutral");
                             break;
@@ -121,7 +126,7 @@ namespace SelectShrineBoss
                             break;
                         }
 
-                        spawnList = SpawnList.Get(biome?.name, "chara", (CardFilter)new CharaFilter()
+                        spawnList = SpawnList.Get(biome?.name, "chara", new CharaFilter()
                         {
                             ShouldPass = (Func<SourceChara.Row, bool>)(s =>
                             {
@@ -133,10 +138,6 @@ namespace SelectShrineBoss
                         break;
                 }
             }
-
-            // レベルによってリストをフィルタリング
-            spawnList = spawnList.Filter(lv, setting.levelRange);
-
             return spawnList;
         }
     }

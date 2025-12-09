@@ -9,7 +9,7 @@ public static class ModInfo
 {
     public const string Guid = "Elin.Select_Shrine_Boss";
     public const string Name = "Select Shrine Boss";
-    public const string Version = "1.0.3";
+    public const string Version = "1.0.4";
 }
 
 [BepInPlugin(ModInfo.Guid, ModInfo.Name, ModInfo.Version)]
