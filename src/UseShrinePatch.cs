@@ -36,9 +36,7 @@ namespace SelectShrineBoss
                 // 既存処理では判定に乱数生成を使用しているが実装意図がよくわからないので省く
                 // 下記が既存処理
                 // if (lv >= 20 && EClass.rnd(100) < lv)
-
-                if (lv >= 20)
-                    lv = dangerLv;
+                //     lv = dangerLv;
             }
 
             // 生成可能モンスターリストを取得
@@ -48,7 +46,7 @@ namespace SelectShrineBoss
             var sortedRows = spawnList.rows
                 .OrderByDescending(row => row.LV)
                 .ToList();
-
+    
             // UI表示
             EClass.ui.AddLayer<LayerList>()
                 .SetSize(400, -1)
@@ -136,8 +134,9 @@ namespace SelectShrineBoss
                 }
             }
 
+            // 既存フィルタ処理を行うとドラゴンのみのリストができあがるのでコメントアウト（件数0で仮リストになっている？）
             // 生成レベルによってリストをフィルタリング
-            spawnList = spawnList.Filter(lv, setting.levelRange);
+            // spawnList = spawnList.Filter(lv, setting.levelRange);
 
             return spawnList;
         }
