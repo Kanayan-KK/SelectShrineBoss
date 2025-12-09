@@ -30,12 +30,13 @@ namespace SelectShrineBoss
             // 生成レベル取得
             var lv = spawnSettings.filterLv == -1 ? dangerLv : spawnSettings.filterLv;
 
-            // 生成レベルに危険度を反映
+            // ゾーンがすくつスケーリングの対象である場合
             if (EClass._zone.ScaleType == ZoneScaleType.Void)
             {
+                // 生成レベルに危険度を反映
                 lv = ((dangerLv - 1) % 50 + 5) * 150 / 100;
 
-                // 下記既存処理で乱数生成を使用しているが実装意図がよくわからないのでコメントアウト
+                // 既存処理では乱数生成を使用しているが実装意図がよくわからないのでコメントアウト
                 // if (lv >= 20 && EClass.rnd(100) < lv)
                 //     lv = dangerLv;
             }
@@ -43,7 +44,7 @@ namespace SelectShrineBoss
             // 生成可能モンスターリストを取得
             var spawnList = CreateSpawnList(spawnSettings, biome);
 
-            // レベルでリストをフィルタリング
+            // レベルでリストをフィルタ
             var filteredList = spawnList.Filter(lv);
 
             // Lvで降順ソート
@@ -61,7 +62,7 @@ namespace SelectShrineBoss
                         // リスト選択時処理を設定
                         SpawnEnemies(point, __instance, sortedRows[index]);
                     })
-                .SetHeader("Select Boss");
+                .SetHeader($"Select Boss (Lv.{lv})");
 
             // 既存処理をスキップ
             return false;
