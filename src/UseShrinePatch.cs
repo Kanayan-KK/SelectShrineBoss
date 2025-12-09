@@ -134,9 +134,8 @@ namespace SelectShrineBoss
                 }
             }
 
-            // 既存フィルタ処理を行うとドラゴンのみのリストができあがるのでコメントアウト（件数0で仮リストになっている？）
-            // 生成レベルによってリストをフィルタリング
-            // spawnList = spawnList.Filter(lv, setting.levelRange);
+            // レベルによってリストをフィルタリング
+            spawnList = spawnList.Filter(lv, setting.levelRange);
 
             return spawnList;
         }
