@@ -52,36 +52,53 @@ namespace SelectShrineBoss
                 .OrderByDescending(row => row.LV)
                 .ToList();
 
-            // 生成予定数
-            var count = 3 + EClass.rnd(2);
-
-            // 選択モンスター情報格納変数
-            var selectedRows = new System.Collections.Generic.List<CardRow>();
-
-            // 選択処理を開始
-            SelectNext(count);
-
-            private void SelectNext(int remaining)
+            if (Plugin.EnableSelectMob != null && Plugin.EnableSelectMob.Value)
             {
-                if (remaining <= 0)
+                // 生成予定数
+                var count = 3 + EClass.rnd(2);
+
+                // 選択モンスター情報格納変数
+                var selectedRows = new System.Collections.Generic.List<CardRow>();
+
+                // 選択処理を開始
+                SelectNext(count);
+
+                void SelectNext(int remaining)
                 {
-                    SpawnEnemies(point, __instance, selectedRows);
-                    return;
+                    if (remaining <= 0)
+                    {
+                        SpawnEnemies(point, __instance, selectedRows);
+                        return;
+                    }
+
+                    // UI表示
+                    var title = selectedRows.Count == 0 ? "Select Boss" : $"Select Mob ({selectedRows.Count}/{count})";
+
+                    EClass.ui.AddLayer<LayerList>()
+                        .SetSize(400)
+                        .SetList(sortedRows,
+                            (row) => $"LV.{row.LV} {row.GetName()}",
+                            (index, _) =>
+                            {
+                                selectedRows.Add(sortedRows[index]);
+                                SelectNext(remaining - 1);
+                            })
+                        .SetHeader($"{title} (Lv.{lv})");
                 }
-
+            }
+            else
+            {
                 // UI表示
-                var title = selectedRows.Count == 0 ? "Select Boss" : $"Select Mob ({selectedRows.Count}/{count})";
-
                 EClass.ui.AddLayer<LayerList>()
                     .SetSize(400)
                     .SetList(sortedRows,
                         (row) => $"LV.{row.LV} {row.GetName()}",
                         (index, _) =>
                         {
-                            selectedRows.Add(sortedRows[index]);
-                            SelectNext(remaining - 1);
+                            // リスト選択時処理を設定
+                            SpawnEnemies(point, __instance, new System.Collections.Generic.List<CardRow> { sortedRows[index] });
                         })
-                    .SetHeader($"{title} (Lv.{lv})");
+                    .SetHeader($"Select Boss (Lv.{lv})");
             }
 
             // 既存処理をスキップ
@@ -99,12 +116,26 @@ namespace SelectShrineBoss
                         SpawnSetting.Boss(rows[0].id, fixedLv: shrine.owner.LV))?.PlayEffect("teleport");
             }
 
-            // モブを生成 (リストの残り)
-            for (var i = 1; i < rows.Count; i++)
+            if (rows.Count > 1)
             {
-                EClass._zone
-                    .SpawnMob(point.GetNearestPoint(allowChara: false),
-                        SpawnSetting.Mob(rows[i].id, fixedLv: shrine.owner.LV))?.PlayEffect("teleport");
+                // 選択されたモブを生成
+                for (var i = 1; i < rows.Count; i++)
+                {
+                    EClass._zone
+                        .SpawnMob(point.GetNearestPoint(allowChara: false),
+                            SpawnSetting.Mob(rows[i].id, fixedLv: shrine.owner.LV))?.PlayEffect("teleport");
+                }
+            }
+            else
+            {
+                // ランダムなモブを生成
+                var count = 3 + EClass.rnd(2);
+                for (var i = 1; i < count; i++)
+                {
+                    EClass._zone
+                        .SpawnMob(point.GetNearestPoint(allowChara: false),
+                            SpawnSetting.DefenseEnemy(shrine.owner.LV))?.PlayEffect("teleport");
+                }
             }
         }
 
