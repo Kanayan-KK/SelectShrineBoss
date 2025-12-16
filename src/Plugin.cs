@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 
 namespace SelectShrineBoss;
@@ -9,7 +10,7 @@ public static class ModInfo
 {
     public const string Guid = "Elin.Select_Shrine_Boss";
     public const string Name = "Select Shrine Boss";
-    public const string Version = "1.0.5";
+    public const string Version = "1.0.6";
 }
 
 [BepInPlugin(ModInfo.Guid, ModInfo.Name, ModInfo.Version)]
@@ -17,9 +18,12 @@ internal class Plugin : BaseUnityPlugin
 {
     internal static Plugin? Instance;
 
+    internal static ConfigEntry<bool>? EnableSelectMob;
+
     private void Awake()
     {
         Instance = this;
+        EnableSelectMob = Config.Bind("General", "EnableSelectMob", false, "Enable Select Mob Enemies");
         Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), ModInfo.Guid);
     }
 

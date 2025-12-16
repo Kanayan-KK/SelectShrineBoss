@@ -52,38 +52,59 @@ namespace SelectShrineBoss
                 .OrderByDescending(row => row.LV)
                 .ToList();
 
-            // UI表示
-            EClass.ui.AddLayer<LayerList>()
-                .SetSize(400)
-                .SetList(sortedRows,
-                    (row) => $"LV.{row.LV} {row.GetName()}",
-                    (index, _) =>
-                    {
-                        // リスト選択時処理を設定
-                        SpawnEnemies(point, __instance, sortedRows[index]);
-                    })
-                .SetHeader($"Select Boss (Lv.{lv})");
+            // 生成予定数
+            var count = 3 + EClass.rnd(2);
+
+            // 選択モンスター情報格納変数
+            var selectedRows = new System.Collections.Generic.List<CardRow>();
+
+            // 選択処理を開始
+            SelectNext(count);
+
+            private void SelectNext(int remaining)
+            {
+                if (remaining <= 0)
+                {
+                    SpawnEnemies(point, __instance, selectedRows);
+                    return;
+                }
+
+                // UI表示
+                var title = selectedRows.Count == 0 ? "Select Boss" : $"Select Mob ({selectedRows.Count}/{count})";
+
+                EClass.ui.AddLayer<LayerList>()
+                    .SetSize(400)
+                    .SetList(sortedRows,
+                        (row) => $"LV.{row.LV} {row.GetName()}",
+                        (index, _) =>
+                        {
+                            selectedRows.Add(sortedRows[index]);
+                            SelectNext(remaining - 1);
+                        })
+                    .SetHeader($"{title} (Lv.{lv})");
+            }
 
             // 既存処理をスキップ
             return false;
         }
 
         // 既存処理と同じメソッドを使用して敵キャラを生成する
-        private static void SpawnEnemies(Point point, TraitShrine shrine, CardRow bossRow)
+        private static void SpawnEnemies(Point point, TraitShrine shrine, System.Collections.Generic.List<CardRow> rows)
         {
-            var count = 3 + EClass.rnd(2);
-
-            // ボスを生成
-            EClass._zone
-                .SpawnMob(point.GetNearestPoint(allowChara: false),
-                    SpawnSetting.Boss(bossRow.id, fixedLv: shrine.owner.LV))?.PlayEffect("teleport");
-
-            // モブを生成
-            for (var i = 1; i < count; i++)
+            // ボスを生成 (リストの最初)
+            if (rows.Count > 0)
             {
                 EClass._zone
                     .SpawnMob(point.GetNearestPoint(allowChara: false),
-                        SpawnSetting.DefenseEnemy(shrine.owner.LV))?.PlayEffect("teleport");
+                        SpawnSetting.Boss(rows[0].id, fixedLv: shrine.owner.LV))?.PlayEffect("teleport");
+            }
+
+            // モブを生成 (リストの残り)
+            for (var i = 1; i < rows.Count; i++)
+            {
+                EClass._zone
+                    .SpawnMob(point.GetNearestPoint(allowChara: false),
+                        SpawnSetting.Mob(rows[i].id, fixedLv: shrine.owner.LV))?.PlayEffect("teleport");
             }
         }
 
