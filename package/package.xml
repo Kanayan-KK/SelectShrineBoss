@@ -7,25 +7,19 @@
     <version>0.23.247</version>
     <tags>General,QoL,Cheat</tags>
     <description>
-        【概要】
-        争いの祠を使用時に召喚されるボスモンスターをリストから選択可能にします。
-        
-        【修正内容】
-        争いの祠使用時に召喚可能モンスター名のリストを表示します。
-        リスト上の選択したモンスターをボスモンスターとして生成します。
-        
-        【注意】
-        リストの内容はバイオームやネフィア危険度の影響を受けます。
-
-        [Overview]
-        Allows you to select the boss monster summoned when using the Shrine of Strife from a list.
-
-        [Features]
-        Displays a list of summonable monster names when the Shrine of Strife is used.
-        Spawns the monster selected from the list as the boss.
-
-        [Note] 
-        The contents of the list are affected by the current Biome and Nefia Danger Level.
+    争いの祠を使用時に召喚されるボスモンスターをリストから選択可能にします。
+    cfgファイルの修正でボス以外のモンスターも選択することが可能です。
+    cfgファイルの修正には「[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3379819704] Mod Config GUI [/url]」の使用をおすすめします。
+    [hr][/hr]
+    Allows you to select which boss monster is summoned when using the Shrine of Conflict.
+    You can also select non-boss monsters by editing the config file.
+    I recommend using [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3379819704] Mod Config GUI [/url] to edit the settings.
+    [hr][/hr]
+    使用纷争之祠时，允许从列表中选择想要召唤的BOSS。
+    通过修改配置文件，也可以选择BOSS以外的怪物。
+    建议使用 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3379819704] Mod Config GUI [/url] 来修改设置。
+    [hr][/hr]
+    [url=https://github.com/Kanayan-KK/SelectShrineBoss] SourceCode [/url]
     </description>
     <builtin>false</builtin>
     <visibility>Public</visibility>
